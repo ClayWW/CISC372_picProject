@@ -14,7 +14,6 @@
 #define TOTAL_THREADS 4
 #define ALGSIZE 3 //fixed size
 
-int thread_count;
 enum KernelTypes type;
 struct args{
     int threadID;
@@ -110,12 +109,12 @@ void* convolute(void *arguments){
 }
 
 void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
-    pthread_t* arr = malloc(thread_count*sizeof(pthread_t)); //array of threads
-    for(int i = 0; i < thread_count; i++){
+    pthread_t* arr = malloc(TOTAL_THREADS*sizeof(pthread_t)); //array of threads
+    for(int i = 0; i < TOTAL_THREADS; i++){
         struct args args= {i, srcImage, destImage};
         pthread_create(&arr[i],NULL,&convolute,&args);
     }
-    for(int j = 0; j < thread_count; j++){
+    for(int j = 0; j < TOTAL_THREADS; j++){
         pthread_join(arr[j],NULL);
     }
     free(arr);
