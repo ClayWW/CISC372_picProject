@@ -18,8 +18,8 @@ int thread_count;
 enum KernelTypes type;
 struct args{
     int threadID;
-    Image* input;
-    Image* output;
+    Image* src;
+    Image* dest;
     Matrix alg;
 }args;
 
@@ -79,8 +79,8 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
                 ptargs->alg[j][k] = algorithm[j][k]; //assign the proper algorithm matrix to the pthread's algorithm matrix
             }
         }
-        ptargs[i].input = srcImage; //assign the rest of the arguments to the pthreads arguments
-        ptargs[i].output = destImage;
+        ptargs[i].src = srcImage; //assign the rest of the arguments to the pthreads arguments
+        ptargs[i].dest = destImage;
         ptargs[i].threadID = i; //lowkey might be useless
         pthread_create(&pids[i],NULL,convolute, ptargs); //pthreaded convolute execution
     }
@@ -96,12 +96,12 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
 void* convolute(void *arguments){
     struct args* args=(struct args*)arguments;
     int row,pix,bit,span;
-    span=args->input->bpp*args->input->bpp;
-    for (row=0;row<args->input->height;row++){
+    span=args->src->bpp*args->src->bpp;
+    for (row=0;row<args->src->height;row++){
         if(row%TOTAL_THREADS==args->threadID){ //threads to rows
-            for (pix=0;pix<args->input->width;pix++){
-                for (bit=0;bit<args->input->bpp;bit++){
-                    args->output->data[Index(pix,row,args->input->width,bit,args->input->bpp)]=getPixelValue(args->input,pix,row,bit,args->alg);
+            for (pix=0;pix<args->src->width;pix++){
+                for (bit=0;bit<args->src->bpp;bit++){
+                    args->dest->data[Index(pix,row,args->src->width,bit,args->src->bpp)]=getPixelValue(args->src,pix,row,bit,args->alg);
                 }
             }
         }
