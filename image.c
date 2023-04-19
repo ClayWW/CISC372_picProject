@@ -3,12 +3,25 @@
 #include <time.h>
 #include <string.h>
 #include "image.h"
+#include <pthread.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+
+#define TOTAL_THREADS 4
+#define ALGSIZE 3 //fixed size
+
+int thread_count;
+enum KernelTypes type;
+struct args{
+    int threadID;
+    Image* input;
+    Image* output;
+    Matrix alg;
+}args;
 
 //An array of kernel matrices to be used for image convolution.  
 //The indexes of these match the enumeration from the header file. ie. algorithms[BLUR] returns the kernel corresponding to a box blur.
@@ -60,12 +73,34 @@ void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
     int row,pix,bit,span;
     span=srcImage->bpp*srcImage->bpp;
     for (row=0;row<srcImage->height;row++){
+        //Missing something
         for (pix=0;pix<srcImage->width;pix++){
             for (bit=0;bit<srcImage->bpp;bit++){
                 destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);
             }
         }
     }
+}
+
+void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
+    struct args* ptargs;
+    pthread_t pids[TOTAL_THREADS]; //four threads to distribute workload
+    for(int i = 0; i < TOTAL_THREADS; i++){ 
+        ptargs = (struct args*)malloc(sizeof(struct args));
+        for(int j = 0; j < ALGSIZE; j++){
+            for(int k = 0; k < ALGSIZE; k++){
+                ptargs->alg[j][k] = algorithm[j][k]; //assign the matrix algorithm to the args
+            }
+        }
+        ptargs[i].input = srcImage; //assign the rest of the arguments to the pthreads arguments
+        ptargs[i].output = destImage;
+        ptargs[i].threadID = i;
+        pthread_create(&pids[i],NULL,convolute, ptargs); //pthreaded convolute
+    }
+    for(int i = 0; i < TOTAL_THREADS; i++){ //join all the threads upon completion
+        pthread_join(pids[i],NULL);
+    }
+    free(ptargs);
 }
 
 //Usage: Prints usage information for the program
@@ -111,7 +146,8 @@ int main(int argc,char** argv){
     destImage.height=srcImage.height;
     destImage.width=srcImage.width;
     destImage.data=malloc(sizeof(uint8_t)*destImage.width*destImage.bpp*destImage.height);
-    convolute(&srcImage,&destImage,algorithms[type]);
+
+    convolutept(&srcImage,&destImage,algorithms[type]);
     stbi_write_png("output.png",destImage.width,destImage.height,destImage.bpp,destImage.data,destImage.bpp*destImage.width);
     stbi_image_free(srcImage.data);
     
