@@ -82,6 +82,11 @@ void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
     }
 }
 
+//convolutept:  Applies a kernel matrix to an image using pthreads to distribute workload
+//Parameters: srcImage: The image being convoluted
+//            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
+//            algorithm: The kernel matrix to use for the convolution
+//Returns: Nothing
 void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
     struct args* ptargs;
     pthread_t pids[TOTAL_THREADS]; //four threads to distribute workload
