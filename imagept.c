@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <string.h>
-#include "image.h"
+#include "imagept.h"
 #include <pthread.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -90,7 +90,7 @@ void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
 void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
     struct args* ptargs;
     pthread_t pids[TOTAL_THREADS]; //four threads to distribute workload
-    for(int i = 0; i < TOTAL_THREADS; i++){ 
+    for(int i = 0; i < TOTAL_THREADS; i++){
         ptargs = (struct args*)malloc(sizeof(struct args));
         for(int j = 0; j < ALGSIZE; j++){
             for(int k = 0; k < ALGSIZE; k++){

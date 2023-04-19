@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <time.h>
 #include <string.h>
-#include "image.h"
-#include <pthread.h>
+#include "imageomp.h"
+#include <omp.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -72,40 +72,14 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
 void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
     int row,pix,bit,span;
     span=srcImage->bpp*srcImage->bpp;
+    #pragma omp for //Is it this easy? Or am I missing something? The world may never know...
     for (row=0;row<srcImage->height;row++){
-        //Missing something
         for (pix=0;pix<srcImage->width;pix++){
             for (bit=0;bit<srcImage->bpp;bit++){
                 destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);
             }
         }
     }
-}
-
-//convolutept:  Applies a kernel matrix to an image using pthreads to distribute workload
-//Parameters: srcImage: The image being convoluted
-//            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
-//            algorithm: The kernel matrix to use for the convolution
-//Returns: Nothing
-void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
-    struct args* ptargs;
-    pthread_t pids[TOTAL_THREADS]; //four threads to distribute workload
-    for(int i = 0; i < TOTAL_THREADS; i++){ 
-        ptargs = (struct args*)malloc(sizeof(struct args));
-        for(int j = 0; j < ALGSIZE; j++){
-            for(int k = 0; k < ALGSIZE; k++){
-                ptargs->alg[j][k] = algorithm[j][k]; //assign the proper algorithm matrix to the pthread's algorithm matrix
-            }
-        }
-        ptargs[i].input = srcImage; //assign the rest of the arguments to the pthreads arguments
-        ptargs[i].output = destImage;
-        ptargs[i].threadID = i; //lowkey might be useless
-        pthread_create(&pids[i],NULL,convolute, ptargs); //pthreaded convolute execution
-    }
-    for(int i = 0; i < TOTAL_THREADS; i++){ //join all the threads upon completion
-        pthread_join(pids[i],NULL);
-    }
-    free(ptargs);
 }
 
 //Usage: Prints usage information for the program
@@ -152,7 +126,9 @@ int main(int argc,char** argv){
     destImage.width=srcImage.width;
     destImage.data=malloc(sizeof(uint8_t)*destImage.width*destImage.bpp*destImage.height);
 
-    convolutept(&srcImage,&destImage,algorithms[type]);
+    #pragma omp parallel //leave it up to the computer to optimize lol
+    convolute(&srcImage,&destImage,algorithms[type]);
+    
     stbi_write_png("output.png",destImage.width,destImage.height,destImage.bpp,destImage.data,destImage.bpp*destImage.width);
     stbi_image_free(srcImage.data);
     
