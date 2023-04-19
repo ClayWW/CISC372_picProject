@@ -74,7 +74,7 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
     pthread_t pids[TOTAL_THREADS]; //four threads to distribute workload
     for(int i = 0; i < TOTAL_THREADS; i++){
         printf("check error 1");
-        ptargs = (struct args*)malloc(sizeof(struct args));
+        ptargs = malloc(sizeof(struct args));
         printf("check error 2");
         for(int j = 0; j < ALGSIZE; j++){
             for(int k = 0; k < ALGSIZE; k++){
