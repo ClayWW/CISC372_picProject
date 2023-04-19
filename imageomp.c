@@ -94,13 +94,13 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
         ptargs = (struct args*)malloc(sizeof(struct args));
         for(int j = 0; j < ALGSIZE; j++){
             for(int k = 0; k < ALGSIZE; k++){
-                ptargs->alg[j][k] = algorithm[j][k]; //assign the matrix algorithm to the args
+                ptargs->alg[j][k] = algorithm[j][k]; //assign the proper algorithm matrix to the pthread's algorithm matrix
             }
         }
         ptargs[i].input = srcImage; //assign the rest of the arguments to the pthreads arguments
         ptargs[i].output = destImage;
-        ptargs[i].threadID = i;
-        pthread_create(&pids[i],NULL,convolute, ptargs); //pthreaded convolute
+        ptargs[i].threadID = i; //lowkey might be useless
+        pthread_create(&pids[i],NULL,convolute, ptargs); //pthreaded convolute execution
     }
     for(int i = 0; i < TOTAL_THREADS; i++){ //join all the threads upon completion
         pthread_join(pids[i],NULL);
