@@ -63,6 +63,7 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
     return result;
 }
 
+//Malloc error causing segmentation fault and core dumped, can't figure out why, aborting mission and rewriting
 //convolutept:  Applies a kernel matrix to an image using pthreads to distribute workload
 //Parameters: srcImage: The image being convoluted
 //            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
@@ -74,7 +75,7 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
     pthread_t pids[TOTAL_THREADS]; //four threads to distribute workload
     for(int i = 0; i < TOTAL_THREADS; i++){
         printf("check error 1");
-        ptargs = (struct args*)malloc(sizeof(struct args));
+        ptargs = (struct args*)malloc(sizeof(struct args)); //error is here but can't figure out why
         printf("check error 2");
         for(int j = 0; j < ALGSIZE; j++){
             for(int k = 0; k < ALGSIZE; k++){
@@ -96,10 +97,10 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
 //Parameters: void* arguments: the set of arguments being passed into the function by the threads. Includes the source image, dest image, thread id number, and their associated algorithm
 //Returns: Nothing
 void* convolute(void *arguments){
-    struct args* args=(struct args*)arguments;
+    struct args* args=(struct args*)arguments; //pass the arguments into the struct and then access the attributes for the for loop
     int row,pix,bit,span;
     span=args->src->bpp*args->src->bpp;
-    for (row=0;row<args->src->height;row++){
+    for (row=0;row<args->src->height;row++){ //adjust for loop attributes to match
         for (pix=0;pix<args->src->width;pix++){
             for (bit=0;bit<args->src->bpp;bit++){
                 args->dest->data[Index(pix,row,args->src->width,bit,args->src->bpp)]=getPixelValue(args->src,pix,row,bit,algorithms[type]);             
@@ -108,16 +109,21 @@ void* convolute(void *arguments){
     }
 }
 
+//convolutept:  Applies a kernel matrix to an image using pthreads to distribute workload
+//Parameters: srcImage: The image being convoluted
+//            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
+//            algorithm: The kernel matrix to use for the convolution
+//Returns: Nothing
 void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
     pthread_t* arr = malloc(TOTAL_THREADS*sizeof(pthread_t)); //array of threads
-    for(int i = 0; i < TOTAL_THREADS; i++){
-        struct args args= {i, srcImage, destImage};
-        pthread_create(&arr[i],NULL,&convolute,&args);
+    for(int i = 0; i < TOTAL_THREADS; i++){ //for every thread
+        struct args args= {i, srcImage, destImage}; //pass input into arguments for threads
+        pthread_create(&arr[i],NULL,&convolute,&args); //create threads for the execution of convolute
     }
-    for(int j = 0; j < TOTAL_THREADS; j++){
+    for(int j = 0; j < TOTAL_THREADS; j++){ //join the threads once job is done
         pthread_join(arr[j],NULL);
     }
-    free(arr);
+    free(arr); //free the malloced array of threads
 }
 
 //Usage: Prints usage information for the program
