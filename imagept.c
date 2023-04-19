@@ -102,8 +102,8 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
         ptargs[i].threadID = i; //lowkey might be useless
         pthread_create(&pids[i],NULL,convolute, ptargs); //pthreaded convolute execution
     }
-    for(int i = 0; i < TOTAL_THREADS; i++){ //join all the threads upon completion
-        pthread_join(pids[i],NULL);
+    for(int l = 0; l < TOTAL_THREADS; l++){ //join all the threads upon completion
+        pthread_join(pids[l],NULL);
     }
     free(ptargs);
 }
