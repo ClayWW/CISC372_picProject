@@ -20,7 +20,7 @@ struct args{
     int threadID;
     Image* src;
     Image* dest;
-    Matrix alg;
+    //Matrix alg;
 }args;
 
 //An array of kernel matrices to be used for image convolution.  
@@ -69,6 +69,7 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
 //            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
 //            algorithm: The kernel matrix to use for the convolution
 //Returns: Nothing
+/*
 void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
     struct args* ptargs;
     pthread_t pids[TOTAL_THREADS]; //four threads to distribute workload
@@ -91,7 +92,7 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
     } 
     free(ptargs);
 }
-
+*/
 //convolute:  Applies a kernel matrix to an image
 //Parameters: void* arguments: the set of arguments being passed into the function by the threads. Includes the source image, dest image, thread id number, and their associated algorithm
 //Returns: Nothing
@@ -100,18 +101,25 @@ void* convolute(void *arguments){
     int row,pix,bit,span;
     span=args->src->bpp*args->src->bpp;
     for (row=0;row<args->src->height;row++){
-        if(row%TOTAL_THREADS==args->threadID){ //threads to rows
-            for (pix=0;pix<args->src->width;pix++){
-                for (bit=0;bit<args->src->bpp;bit++){
-                    args->dest->data[Index(pix,row,args->src->width,bit,args->src->bpp)]=getPixelValue(args->src,pix,row,bit,args->alg);
-                }
+        for (pix=0;pix<args->src->width;pix++){
+            for (bit=0;bit<args->src->bpp;bit++){
+                args->dest->data[Index(pix,row,args->src->width,bit,args->src->bpp)]=getPixelValue(args->src,pix,row,bit,algorithms[type]);             
             }
         }
     }
-    return NULL;
 }
 
-
+void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
+    pthread_t* arr = malloc(thread_count*sizeof(pthread_t)); //array of threads
+    for(int i = 0; i < thread_count; i++){
+        struct args args= {i, srcImage, destImage};
+        pthread_create(&arr[i],NULL,&convolute,&args);
+    }
+    for(int j = 0; j < thread_count; j++){
+        pthread_join(arr[j],NULL);
+    }
+    free(arr);
+}
 
 //Usage: Prints usage information for the program
 //Returns: -1
