@@ -64,24 +64,6 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
     return result;
 }
 
-//convolute:  Applies a kernel matrix to an image
-//Parameters: srcImage: The image being convoluted
-//            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
-//            algorithm: The kernel matrix to use for the convolution
-//Returns: Nothing
-void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
-    int row,pix,bit,span;
-    span=srcImage->bpp*srcImage->bpp;
-    for (row=0;row<srcImage->height;row++){
-        //Missing something
-        for (pix=0;pix<srcImage->width;pix++){
-            for (bit=0;bit<srcImage->bpp;bit++){
-                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);
-            }
-        }
-    }
-}
-
 //convolutept:  Applies a kernel matrix to an image using pthreads to distribute workload
 //Parameters: srcImage: The image being convoluted
 //            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
@@ -104,9 +86,30 @@ void convolutept(Image* srcImage, Image* destImage, Matrix algorithm){
     }
     for(int l = 0; l < TOTAL_THREADS; l++){ //join all the threads upon completion
         pthread_join(pids[l],NULL);
-    }
+    } 
     free(ptargs);
 }
+
+//convolute:  Applies a kernel matrix to an image
+//Parameters: void* arguments: the set of arguments being passed into the function by the threads. Includes the source image, dest image, thread id number, and their associated algorithm
+//Returns: Nothing
+void* convolute(void *arguments){
+    struct args* args=(struct args*)arguments;
+    int row,pix,bit,span;
+    span=args->input->bpp*args->input->bpp;
+    for (row=0;row<args->input->height;row++){
+        if(row%TOTAL_THREADS==args->threadID){ //threads to rows
+            for (pix=0;pix<args->input->width;pix++){
+                for (bit=0;bit<args->input->bpp;bit++){
+                    args->output->data[Index(pix,row,args->input->width,bit,args->input->bpp)]=getPixelValue(args->input,pix,row,bit,args->alg);
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+
 
 //Usage: Prints usage information for the program
 //Returns: -1
