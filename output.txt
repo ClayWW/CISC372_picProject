@@ -1,0 +1,9 @@
+Script started on Wed Apr 19 19:41:42 2023
+]0;clayw@r1n00.darwin:~/CISC372_picProject[?1034h[clayw@r1n00 CISC372_picProject]$ srun imagept pic2 1.jpg edge
+Took 7 seconds
+]0;clayw@r1n00.darwin:~/CISC372_picProject[clayw@r1n00 CISC372_picProject]$ srun imap e geom pm  ,[  mp pic1.jpg edge
+Took 6 seconds
+]0;clayw@r1n00.darwin:~/CISC372_picProject[clayw@r1n00 CISC372_picProject]$ exit  
+exit
+
+Script done on Wed Apr 19 19:42:37 2023
